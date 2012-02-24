@@ -1,0 +1,30 @@
+<script>
+
+// url usefull for debugging this page:
+//           chrome-extension://ndaafoinhlcdmcjngjahogbmgcncjhel/background.html
+var lastPaused; // to be implemented
+
+var playerPatterns =  [
+            {name:"grooveshark",  pattern: new RegExp("grooveshark.com", "i")},
+            {name:"googleMusic",  pattern: new RegExp("music.google.com", "i")},
+            {name: "pandora", pattern: new RegExp("pandora.com", "i") }
+                      ];
+
+chrome.extension.onRequest.addListener(
+  function(request, sender, sendResponse) {
+    chrome.tabs.query( {} , function (tab) {
+        if(!lastPaused){
+            var i=0;
+            for(i in tab){
+                var tab_url= tab[i].url;
+                for( var j in playerPatterns){
+                    if ( tab_url.match( playerPatterns[j].pattern) ){
+                        chrome.tabs.sendRequest(tab[i].id, {action: request.action, name: playerPatterns[j].name}   );
+                    }
+                }
+            }
+        }
+    });
+});
+
+</script>
