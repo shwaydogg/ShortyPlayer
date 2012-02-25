@@ -1,30 +1,83 @@
 <script>
 
-// url usefull for debugging this page:
-//           chrome-extension://ndaafoinhlcdmcjngjahogbmgcncjhel/background.html
-var lastPaused; // to be implemented
+// url for this page while debugging,
+// this is the only way to see the console logs of this page:
+//     chrome-extension://ndaafoinhlcdmcjngjahogbmgcncjhel/background.html
+
+var lastPaused = '';
+var action;
+var musicTabs = [];
+var currPlayer;
 
 var playerPatterns =  [
             {name:"grooveshark",  pattern: new RegExp("grooveshark.com", "i")},
-            {name:"googleMusic",  pattern: new RegExp("music.google.com", "i")},
-            {name: "pandora", pattern: new RegExp("pandora.com", "i") }
+            {name:"googleMusic",  pattern: new RegExp("music.google.com", "i")}
                       ];
+
+//Creates an array, musicTabs[], that includes all the tabs that match regex in playerPatterns:
+function updateMusicTabs(tab){
+    musicTabs = [];
+    for(i in tab){
+        var tab_url= tab[i].url;
+        for( var j in playerPatterns){
+            if ( tab_url.match( playerPatterns[j].pattern) ){
+                musicTabs.push({tab: tab[i], name: playerPatterns[j].name});
+            }
+        }
+    }
+    if(lastPaused){
+        musicTabs.push(lastPaused);
+    }
+}
+
+//the last step: send the action to the tab and let contentScript.js handle the rest
+function takeAction(index){
+        if(currPlayer){
+            chrome.tabs.sendRequest(currPlayer.tab.id, {action: action, name: currPlayer.name}   );
+            lastPaused = {tab:currPlayer.tab, name: currPlayer.name};
+        }
+        else{
+            chrome.tabs.sendRequest(
+                musicTabs[musicTabs.length-1].tab.id, 
+                {action: action, name: musicTabs[musicTabs.length-1].name}   
+                                    );
+        }
+}
+
+//check if a tab is currently playing music:
+function currPlaying(i){  
+    if(i==-1){
+        currPlayer = '';
+        takeAction();
+        return;
+    }
+    else{
+        chrome.tabs.sendRequest(musicTabs[i].tab.id, {checkPlaying: true, name: musicTabs[i].name},function (response){
+            if( response ){ 
+                currPlayer = musicTabs[i];
+                takeAction();
+                return;
+            }else{
+                currPlaying(i-1);
+                return;
+            }
+        });
+    }
+}
 
 chrome.extension.onRequest.addListener(
   function(request, sender, sendResponse) {
     chrome.tabs.query( {} , function (tab) {
-        if(!lastPaused){
-            var i=0;
-            for(i in tab){
-                var tab_url= tab[i].url;
-                for( var j in playerPatterns){
-                    if ( tab_url.match( playerPatterns[j].pattern) ){
-                        chrome.tabs.sendRequest(tab[i].id, {action: request.action, name: playerPatterns[j].name}   );
-                    }
-                }
-            }
+        updateMusicTabs(tab);
+        action = request.action;
+
+        if(musicTabs.length == 0){
+            alert('No supported music playing tabs open!');
+            return;
         }
-    });
+        //currPlaying will call takeAction so this is where the magic happens...
+        currPlaying( musicTabs.length - 1 );
+    }); 
 });
 
 </script>

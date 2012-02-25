@@ -239,56 +239,67 @@ function sendCommand(cmd){
 	chrome.extension.sendRequest({action: cmd}, function(response) {});
 }
 
+var playFun = {
+	grooveshark:  function(action){
+		var id = '';
+		switch(action){
+			case 'play' || 'pause': 
+				id  = "player_play_pause";
+				break;
+			case 'rev': 
+				id = "player_previous";
+				break;
+			case 'fwd': 
+				id = "player_next";
+				break;
+		}
+		document.getElementById(id).click();
+	},
+	googleMusic:  function(action){
+		var id = '';
+		switch(action){
+			case 'play' || 'pause': 
+				id  = "playPause";
+				break;
+			case 'rev': 
+				id = "rew";
+				break;
+			case 'fwd': 
+				id = "ff";
+				break;
+			//thumbsUpPlayer   thumbsDownPlayer  shuffle_mode_button repeat_mode_button
+		} 
+		replicateClick(document.getElementById(id));
+	}
+};
 
-
-
-var playerFun = {
-					grooveshark:  function(action){
-						var id = '';
-						switch(action){
-							case 'play' || 'pause': 
-								id  = "player_play_pause";
-								break;
-							case 'rev': 
-								id = "player_previous";
-								break;
-							case 'fwd': 
-								id = "player_next";
-								break;
-						}
-						document.getElementById(id).click();
-					},
-					googleMusic:  function(action){
-						var id = '';
-						switch(action){
-							case 'play' || 'pause': 
-								id  = "playPause";
-								break;
-							case 'rev': 
-								id = "rew";
-								break;
-							case 'fwd': 
-								id = "ff";
-								break;
-							//thumbsUpPlayer   thumbsDownPlayer  shuffle_mode_button repeat_mode_button
-						} 
-						replicateClick(document.getElementById(id));
-					}
-				};
+var isPlaying = {
+	grooveshark:  function(){
+		return document.getElementById("player_play_pause").classList.contains('pause');
+	},
+	googleMusic:  function(){
+		return document.getElementById("playPause").getAttribute('title') == 'Pause';
+	}
+};
 
 chrome.extension.onRequest.addListener(
 	function(request, sender, sendResponse) {
     	if(request.name && request.action){
-    		var playerName = request.name;
-    		switch(request.name){
-    			case 'grooveshark':
-        			playerFun.grooveshark(request.action);
-        		case 'googleMusic':
-        			playerFun.googleMusic(request.action);
-        		// case 'pandora':
-        		// 	playerFun.pandora(request.action);
+    		playFun[request.name](request.action);
+    		sendResponse({success:true});
+    		return;
+    	}
+    	else if(request.checkPlaying){
+    		if( isPlaying[request.name]() ){
+    			console.log('sending response true');
+    			sendResponse(true);
+    			return;
     		}
-    		sendResponse({success: "true"});
+    		else{
+    			console.log('sending response false');
+    			sendResponse(false);
+    			return;
+    		}
     	}
     	else{
       		sendResponse({}); // snub them.
