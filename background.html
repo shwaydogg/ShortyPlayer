@@ -45,20 +45,18 @@ function takeAction(index){
 }
 
 //check if a tab is currently playing music:
-function currPlaying(i){  
+function currPlaying(i, callback){  
     if(i==-1){
-        currPlayer = '';
-        takeAction();
+        callback('');
         return;
     }
     else{
         chrome.tabs.sendRequest(musicTabs[i].tab.id, {checkPlaying: true, name: musicTabs[i].name},function (response){
             if( response ){ 
-                currPlayer = musicTabs[i];
-                takeAction();
+                callback(musicTabs[i]);
                 return;
             }else{
-                currPlaying(i-1);
+                currPlaying(i-1, callback);
                 return;
             }
         });
@@ -76,7 +74,10 @@ chrome.extension.onRequest.addListener(
             return;
         }
         //currPlaying will call takeAction so this is where the magic happens...
-        currPlaying( musicTabs.length - 1 );
+        currPlaying( musicTabs.length - 1, function(result){
+            currPlayer = result;
+            takeAction();
+        } );
     }); 
 });
 
