@@ -7,6 +7,7 @@ shortcut = {
 	 */
 	'all_shortcuts':{},//All the shortcuts are stored in this array
 	'add': function(shortcut_combination,callback,opt) {
+
 		//Provide a set of default options
 		var default_options = {
 			'type':'keydown',
@@ -235,10 +236,12 @@ shortcut = {
 	}
 // END: http://stackoverflow.com/questions/6259764/google-music-beta-thumbs-up-and-down-now-playing-using-javascript
 
-function sendCommand(cmd){
-	chrome.extension.sendRequest({action: cmd}, function(response) {});
-}
 
+///////////////////////////////////////////////////////////////////////////////
+// *player specific information*
+//  Add selectors here for for additional players
+// 	so that the js in  indentifying correct  : 
+///////////////////////////////////////////////////////////////////////////////
 var playFun = {
 	grooveshark:  function(action){
 		var id = '';
@@ -273,6 +276,10 @@ var playFun = {
 	}
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// *player specific information*
+//  Functions to check if the player on the page is playing
+///////////////////////////////////////////////////////////////////////////////
 var isPlaying = {
 	grooveshark:  function(){
 		return document.getElementById("player_play_pause").classList.contains('pause');
@@ -282,21 +289,59 @@ var isPlaying = {
 	}
 };
 
+
+///////////////////////////////////////////////////////////////////////////////
+//  function called after a shortcut keystoke is detected 
+//  This is how the message is passed to  
+///////////////////////////////////////////////////////////////////////////////
+function sendCommand(cmd){
+	chrome.extension.sendRequest({action: cmd}, function(response) {});
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//  CUSTOMIZE SHORTCUTS HERE : 
+///////////////////////////////////////////////////////////////////////////////
+var customShortCuts = 	[
+				{action: 'play', shortCut: "Ctrl+down"},
+				{action: 'pause', shortCut: "Ctrl+up" },
+				{action: "rev", shortCut: "Ctrl+left"},
+				{action: "fwd", shortCut: "Ctrl+right"}
+						];
+
+for(i in customShortCuts){
+	(function(){
+		var sc = customShortCuts[i].shortCut;
+		var com = customShortCuts[i].action;
+
+		shortcut.add( sc ,function() {
+			sendCommand(com);
+		},{
+			'type':'keydown',
+			'propagate':true,
+			'target':document
+		});
+	})();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//  Listen for requests from background.html : 
+///////////////////////////////////////////////////////////////////////////////
 chrome.extension.onRequest.addListener(
 	function(request, sender, sendResponse) {
+		//Recieve and implement request to take action on this page's player
     	if(request.name && request.action){
     		playFun[request.name](request.action);
     		sendResponse({success:true});
     		return;
     	}
+    	//Check if the media is currently playing
     	else if(request.checkPlaying){
     		if( isPlaying[request.name]() ){
-    			console.log('sending response true');
     			sendResponse(true);
     			return;
     		}
     		else{
-    			console.log('sending response false');
     			sendResponse(false);
     			return;
     		}
@@ -305,31 +350,3 @@ chrome.extension.onRequest.addListener(
       		sendResponse({}); // snub them.
       	}
   });
-
-
-//CREATE SHORTCUT KEY LISTENERS:
-shortcut.add( "Ctrl+down" ,function() {
-	sendCommand("play");
-},{
-	'type':'keydown',
-	'propagate':true,
-	'target':document
-});
-
-shortcut.add( "Ctrl+left" ,function() {
-	sendCommand("rev");
-},{
-	'type':'keydown',
-	'propagate':true,
-	'target':document
-});
-
-shortcut.add( "Ctrl+right" ,function() {
-	sendCommand("fwd");
-},{
-	'type':'keydown',
-	'propagate':true,
-	'target':document
-});
-
-console.log("contentscript.js is loaded")

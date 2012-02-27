@@ -2,7 +2,7 @@
   "name": "Shorty Player",
   "version": "1.0",
   "background_page": "background.html",
-  "description": "Use shortcuts to control web based media players.  Pronounced: 'Shaw-Tee Play-Ya'.",
+  "description": "Use shortcuts to control web based media players from any tab in any window in Chrome.  Pronounced: 'Shaw-Tee Play-Ya'.",
   "permissions": [ "tabs"],
   "content_scripts": [
     {

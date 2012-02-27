@@ -1,20 +1,23 @@
 <script>
 
-// url for this page while debugging,
-// this is the only way to see the console logs of this page:
-//     chrome-extension://ndaafoinhlcdmcjngjahogbmgcncjhel/background.html
-
-var lastPaused = '';
+var lastUsed = '';
 var action;
 var musicTabs = [];
 var currPlayer;
 
+///////////////////////////////////////////////////////////////////////////////
+// *player specific information*
+//  Regex to filter out the tabs that have supported media players
+///////////////////////////////////////////////////////////////////////////////
 var playerPatterns =  [
             {name:"grooveshark",  pattern: new RegExp("grooveshark.com", "i")},
             {name:"googleMusic",  pattern: new RegExp("music.google.com", "i")}
                       ];
 
-//Creates an array, musicTabs[], that includes all the tabs that match regex in playerPatterns:
+///////////////////////////////////////////////////////////////////////////////
+// Creates an array, musicTabs[], which includes 
+// all the tabs that match the playerPatterns:
+///////////////////////////////////////////////////////////////////////////////
 function updateMusicTabs(tab){
     musicTabs = [];
     for(i in tab){
@@ -25,16 +28,24 @@ function updateMusicTabs(tab){
             }
         }
     }
-    if(lastPaused){
-        musicTabs.push(lastPaused);
+    // The last used tab will be the one that we want to 
+    // take action on first.  It is added to the end of musicTabs[] 
+    // so that if the tab still exists currPlaying will find it first
+    // and that is where actions will be directed untill there
+    // is a new current player or the lastUsed tab is closed.
+    if(lastUsed){
+        musicTabs.push(lastUsed);
     }
 }
 
-//the last step: send the action to the tab and let contentScript.js handle the rest
+///////////////////////////////////////////////////////////////////////////////
+// The last step: send the action to the tab and 
+// let contentScript.js handle the rest
+///////////////////////////////////////////////////////////////////////////////
 function takeAction(index){
         if(currPlayer){
             chrome.tabs.sendRequest(currPlayer.tab.id, {action: action, name: currPlayer.name}   );
-            lastPaused = {tab:currPlayer.tab, name: currPlayer.name};
+            lastUsed = {tab:currPlayer.tab, name: currPlayer.name};
         }
         else{
             chrome.tabs.sendRequest(
@@ -44,7 +55,9 @@ function takeAction(index){
         }
 }
 
-//check if a tab is currently playing music:
+///////////////////////////////////////////////////////////////////////////////
+// Check if a tab is currently playing music:
+///////////////////////////////////////////////////////////////////////////////
 function currPlaying(i, callback){  
     if(i==-1){
         callback('');
@@ -63,6 +76,9 @@ function currPlaying(i, callback){
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// listen for an action request from contentScript.js
+///////////////////////////////////////////////////////////////////////////////
 chrome.extension.onRequest.addListener(
   function(request, sender, sendResponse) {
     chrome.tabs.query( {} , function (tab) {
@@ -70,7 +86,7 @@ chrome.extension.onRequest.addListener(
         action = request.action;
 
         if(musicTabs.length == 0){
-            alert('No supported music playing tabs open!');
+            alert('No supported media tabs open! -With Love, from your Shorty Player...');
             return;
         }
         //currPlaying will call takeAction so this is where the magic happens...
@@ -82,3 +98,20 @@ chrome.extension.onRequest.addListener(
 });
 
 </script>
+
+
+<body>
+    <h1> 
+        Shorty Player's Background.html
+    </h1>
+    <p>
+        Thanks for checking me out!
+    </p>
+    <p>
+        This may be the address of this page: <br/>
+        chrome-extension://dnjohbofccjbkcmbfkbopdleiobfgaoc/background.html
+    </p>
+    <p>
+        Don't keep this page open while using shortyplayer.  It will mess us up! 
+    </p>
+</body>
