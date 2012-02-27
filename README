@@ -1,0 +1,32 @@
+A chrome extension: Use shortcuts to control web based media players from any tab in any window in Chrome.  Pronounced: 'Shaw-Tee Play-Ya'.
+
+To Install :
+* In chrome go to chrome://settings/extensions#
+* Check developer mode on the right.
+* click "Load unpacked extension"
+* locate folder on disk
+
+Grooveshark and Google Music are the two currently supported players.
+Right now the shortcuts are hardcoded to the ctrl plus a direction key.
+Down - play pause 
+Left - reverse
+Right – forward
+
+Multiple Player Action Precedence:
+[if] If media is currently playing in a tab it will receive the action
+[else if] Otherwise if no media is playing than the last tab to have received an action will again receive the action.
+[else] If none op the first tab with a supported media player will receive the action
+
+
+
+I tried to make it easy to add additional players.  There are three places you need to edit to add a player and they are marked in the comments by “ *player specific information* ”.  
+
+It is also easy to edit the shortcuts in the code look for “CUSTOMIZE SHORTCUTS HERE :” in the comments.
+
+
+
+
+Thanks to:
+Binny V A for js shortcut code at : http://www.openjs.com/scripts/events/keyboard_shortcuts/
+
+Antimatter15 on stackoverflow for js to click on google music buttons: http://stackoverflow.com/questions/6259764/google-music-beta-thumbs-up-and-down-now-playing-using-javascript
